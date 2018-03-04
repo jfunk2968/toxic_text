@@ -25,7 +25,7 @@ def timer(start,end):
 
 
 def get_loader(split):
-    idx = [i for i, x in enumerate(splits) if x==0]
+    idx = [i for i, x in enumerate(splits) if x==split]
     X = train_clean.loc[idx, 'clean_text'].copy()
     y = train_clean.loc[idx, 'toxic'].copy()
     X_bow = csr_matrix(vectorizer.transform(X), dtype=np.float32).todense()
@@ -33,7 +33,7 @@ def get_loader(split):
     y_tensor = torch.LongTensor([int(x) for x in y])
     split_set = torch.utils.data.TensorDataset(X_tensor, y_tensor)
     return(torch.utils.data.DataLoader(split_set, 
-    	batch_size=100, 
+    	batch_size=64, 
     	shuffle=False, 
     	num_workers=2))
 
@@ -53,7 +53,6 @@ def create_submission(netmodel, outfile):
 
     pred = []
     ids = []
-
     cuts = np.append(np.arange(0, len(test_clean), 1000), len(test_clean)+1)
     
     for i in range(len(cuts)-1):
@@ -66,9 +65,8 @@ def create_submission(netmodel, outfile):
             pred += list(outputs[:,1].data)
     
     scores = pd.concat([test_clean['id'], pd.Series(pred).apply(lambda x: np.exp(x))], axis=1) 
-    scores.columns=['id', 'toxic']
+    scores.columns=['id', args.target]
     scores.to_csv(outfile, index=False)
-
     return None
 
 
@@ -115,18 +113,15 @@ if __name__ == "__main__":
 
 	t_start = time.time()
 
-	train_clean = joblib.load('../../data/train_clean.pckl')
-	test_clean = joblib.load('../../data/test_clean.pckl')
-	vectorizer = joblib.load('../vectorizer.pckl')
-	splits = joblib.load('../splits.pckl')
+	train_clean = joblib.load('../data/train_clean.pckl')
+	test_clean = joblib.load('../data/test_clean.pckl')
+	vectorizer = joblib.load('vectorizer.pckl')
+	splits = joblib.load('splits.pckl')
 
 	early_stopping_epochs = 10
 
-	#for target in ['severe_toxic','obscene','threat','insult','identity_hate']:
-
 	w = train_clean[args.target].value_counts(normalize=True).iloc[::-1]
 	C = Variable(torch.FloatTensor([w[1], w[0]])).cuda()
-
 
 	if args.mtype=='linear':
 		model = BoWClassifier(2, 177012)
@@ -207,10 +202,10 @@ if __name__ == "__main__":
 	ax.set(xlabel='EPOCH', 
 		ylabel='Test Accuracy (AUC)', 
 		title=args.target.upper()+' - Linear Fit')
-	plt.savefig(args.target+'_'+args.mtype+'_epoch_auc')
+	plt.savefig(args.mtype+'/'+args.target+'_epoch_auc')
 
-	torch.save(model.state_dict(), args.target+'_'+args.mtype+'_model_state')
+	torch.save(model.state_dict(), args.mtype+'/'+args.target+'_model_state')
 
-	create_submission(model, args.target+'_'+args.mtype+'_test_scores.csv')
+	create_submission(model, args.mtype+'/'+args.target+'_test_scores.csv')
 
 	print("TOTAL RUN TIME: ", timer(t_start, time.time()))
