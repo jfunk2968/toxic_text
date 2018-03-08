@@ -1,7 +1,7 @@
 #!/bin/bash
-python pytorch_linear.py toxic 300 single > toxic_single_log.txt
-python pytorch_linear.py severe_toxic 300 single > severe_toxic_single_log.txt
-python pytorch_linear.py obscene 300 single > obscene_single_log.txt
-python pytorch_linear.py insult 300 single > insult_single_log.txt
-python pytorch_linear.py threat 300 single > threat_single_log.txt
-python pytorch_linear.py identity_hate 300 single > identity_hate_single_log.txt
+python pytorch.py toxic 300 single > single/toxic_log.txt
+python pytorch.py severe_toxic 300 single > single/severe_toxic_log.txt
+python pytorch.py obscene 300 single > single/obscene_log.txt
+python pytorch.py insult 300 single > single/insult_log.txt
+python pytorch.py threat 300 single > single/threat_log.txt
+python pytorch.py identity_hate 300 single > single/identity_hate_log.txt
